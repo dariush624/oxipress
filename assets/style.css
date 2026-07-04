@@ -1,0 +1,114 @@
+:root {
+  --bg: #ffffff;
+  --fg: #1a1a1a;
+  --muted: #6b7280;
+  --accent: #b7410e;
+  --border: #e5e7eb;
+  --code-bg: #2b303b;
+}
+:root[data-theme="dark"] {
+  --bg: #111318;
+  --fg: #e5e7eb;
+  --muted: #9ca3af;
+  --accent: #f97316;
+  --border: #2a2e37;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111318;
+    --fg: #e5e7eb;
+    --muted: #9ca3af;
+    --accent: #f97316;
+    --border: #2a2e37;
+  }
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0 auto;
+  max-width: 44rem;
+  padding: 0 1.25rem 4rem;
+  font: 17px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 0 2rem;
+}
+.site-title { font-weight: 700; font-size: 1.2rem; color: var(--fg); }
+.site-header nav { display: flex; gap: 1rem; align-items: center; }
+#theme-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--fg);
+  cursor: pointer;
+  padding: 0.15rem 0.5rem;
+  font-size: 1rem;
+}
+
+.meta { color: var(--muted); font-size: 0.85rem; }
+.tag { color: var(--muted); }
+.post-item { margin-bottom: 2rem; }
+.post-item h2 { margin: 0 0 0.25rem; font-size: 1.25rem; }
+.post-item h2 a { color: var(--fg); }
+.post-item p { margin: 0.25rem 0; }
+
+.post h1 { line-height: 1.25; margin-bottom: 0.25rem; }
+.post-body img { max-width: 100%; }
+.post-body pre {
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  background: var(--code-bg);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.post-body code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.post-body :not(pre) > code {
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+.post-body blockquote {
+  margin: 1rem 0;
+  padding: 0.25rem 1rem;
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
+}
+.post-body table { border-collapse: collapse; width: 100%; }
+.post-body th, .post-body td { border: 1px solid var(--border); padding: 0.4rem 0.6rem; }
+
+.search { margin-bottom: 2.5rem; position: relative; }
+#search-input {
+  width: 100%;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 1rem;
+}
+#search-results {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  position: absolute;
+  width: 100%;
+  background: var(--bg);
+  z-index: 10;
+}
+#search-results li { padding: 0.5rem 0.9rem; border-bottom: 1px solid var(--border); }
+#search-results li:last-child { border-bottom: none; }
+#search-results .desc { display: block; color: var(--muted); font-size: 0.85rem; }
+
+.site-footer { margin-top: 4rem; color: var(--muted); font-size: 0.85rem; }

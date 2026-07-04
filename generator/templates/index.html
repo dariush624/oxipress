@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="search">
+  <input id="search-input" type="search" placeholder="Search posts…" autocomplete="off">
+  <ul id="search-results" hidden></ul>
+</section>
+<section class="post-list">
+  {% for post in posts %}
+  <article class="post-item">
+    <h2><a href="/posts/{{ post.slug }}/">{{ post.title }}</a></h2>
+    <p class="meta">
+      <time datetime="{{ post.date }}">{{ post.date }}</time>
+      · {{ post.reading_time }} min read
+      {% for tag in post.tags %} · <a class="tag" href="/tags/{{ tag }}/">#{{ tag }}</a>{% endfor %}
+    </p>
+    <p>{{ post.description }}</p>
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}
+{% block scripts %}<script src="/search.js"></script>{% endblock %}

@@ -1,0 +1,9 @@
+{
+  "buildCommand": "bash build.sh",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/search.rs": {
+      "runtime": "vercel-rust@4.0.9"
+    }
+  }
+}

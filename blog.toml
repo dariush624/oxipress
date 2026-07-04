@@ -1,0 +1,4 @@
+title = "Oxipress"
+description = "A fast Markdown blog, built in Rust, deployed on Vercel."
+base_url = "https://example.vercel.app"
+author = "Your Name"
