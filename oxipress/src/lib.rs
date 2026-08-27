@@ -80,7 +80,12 @@ pub fn build(root: impl AsRef<Path>, include_drafts: bool) -> Result<(), String>
     let html = env
         .get_template("index.html")
         .unwrap()
-        .render(context! { site => site, posts => post_list, page_url => format!("{base_url}/") })
+        .render(context! {
+            site => site,
+            posts => post_list,
+            page_url => format!("{base_url}/"),
+            json_ld => website_json_ld(&config, &base_url),
+        })
         .map_err(|e| e.to_string())?;
     write(&out.join("index.html"), &html)?;
 
@@ -92,6 +97,7 @@ pub fn build(root: impl AsRef<Path>, include_drafts: bool) -> Result<(), String>
                 site => site,
                 post => post_ctx(p),
                 page_url => format!("{base_url}/posts/{}/", p.slug),
+                json_ld => post_json_ld(&config, &base_url, p),
             })
             .map_err(|e| e.to_string())?;
         write(&out.join("posts").join(&p.slug).join("index.html"), &html)?;
@@ -113,6 +119,7 @@ pub fn build(root: impl AsRef<Path>, include_drafts: bool) -> Result<(), String>
                 tag => tag,
                 posts => list,
                 page_url => format!("{base_url}/tags/{tag}/"),
+                json_ld => tag_json_ld(&config, &base_url, tag, tagged),
             })
             .map_err(|e| e.to_string())?;
         write(&out.join("tags").join(tag).join("index.html"), &html)?;
@@ -215,6 +222,73 @@ fn write_sitemap(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n{body}</urlset>\n"
     );
     write(&out.join("sitemap.xml"), &xml)
+}
+
+fn website_json_ld(config: &Config, base_url: &str) -> String {
+    serde_json::json!({
+        "@context": "https://schema.org",
+        "@type": ["WebSite", "Blog"],
+        "url": format!("{base_url}/"),
+        "name": config.title,
+        "description": config.description,
+        "inLanguage": "en",
+        "author": { "@type": "Person", "name": config.author },
+        "publisher": { "@type": "Person", "name": config.author },
+    })
+    .to_string()
+}
+
+fn post_json_ld(config: &Config, base_url: &str, p: &Post) -> String {
+    let url = format!("{base_url}/posts/{}/", p.slug);
+    let date = p.date.to_string();
+    serde_json::json!({
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": p.title,
+        "description": p.description,
+        "url": url,
+        "mainEntityOfPage": { "@type": "WebPage", "@id": url },
+        "datePublished": date,
+        "dateModified": date,
+        "inLanguage": "en",
+        "keywords": p.tags,
+        "author": { "@type": "Person", "name": config.author },
+        "publisher": { "@type": "Person", "name": config.author },
+        "isPartOf": {
+            "@type": "Blog",
+            "@id": format!("{base_url}/"),
+            "name": config.title,
+        },
+    })
+    .to_string()
+}
+
+fn tag_json_ld(config: &Config, base_url: &str, tag: &str, tagged: &[&Post]) -> String {
+    let items: Vec<_> = tagged
+        .iter()
+        .enumerate()
+        .map(|(i, p)| {
+            serde_json::json!({
+                "@type": "ListItem",
+                "position": i + 1,
+                "url": format!("{base_url}/posts/{}/", p.slug),
+                "name": p.title,
+            })
+        })
+        .collect();
+    serde_json::json!({
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "url": format!("{base_url}/tags/{tag}/"),
+        "name": format!("#{tag}"),
+        "isPartOf": {
+            "@type": "WebSite",
+            "@id": format!("{base_url}/"),
+            "name": config.title,
+        },
+        "mainEntity": { "@type": "ItemList", "itemListElement": items },
+    })
+    .to_string()
 }
 
 fn write_search_index(out: &Path, posts: &[Post]) -> Result<(), String> {

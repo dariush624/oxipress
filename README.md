@@ -12,7 +12,8 @@ GitHub Pages, Netlify, or any static host.
 - **Full static search** — a lean JSON index (title / description / tags, no post
   bodies) is fetched once and ranked client-side; a few hundred bytes per post,
   no backend
-- **SEO pack** — RSS feed, `sitemap.xml`, Open Graph meta, canonical URLs
+- **SEO pack** — RSS feed, `sitemap.xml`, Open Graph meta, canonical URLs,
+  schema.org JSON-LD (`BlogPosting` / `WebSite` / `CollectionPage`)
 - **Tags** — frontmatter tags become `/tags/<tag>/` pages
 - **Reading time**, dark mode (system preference + toggle), drafts
 - GitHub-flavored Markdown: tables, footnotes, task lists, strikethrough, emoji shortcodes

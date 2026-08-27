@@ -14,6 +14,7 @@
   <link rel="canonical" href="{{ page_url }}">
   <link rel="alternate" type="application/rss+xml" title="{{ site.title }}" href="/feed.xml">
   <link rel="stylesheet" href="/style.css">
+  {% if json_ld %}<script type="application/ld+json">{{ json_ld|safe }}</script>{% endif %}
 </head>
 <body>
   <header class="site-header">
