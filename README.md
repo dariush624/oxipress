@@ -1,38 +1,56 @@
 # Oxipress 🦀
 
-A fast Markdown blog template for Vercel, built entirely in Rust.
-
-Inspired by [MDXpress-Blog-CNP](https://github.com/eshan-singh78/MDXpress-Blog-CNP),
-but instead of compiling Markdown on every request in a Node function, Oxipress
-pre-renders everything to static HTML at build time with a Rust binary — pages
-are served straight from Vercel's CDN with zero cold starts. The only
-serverless function is `/api/search`, a tiny stripped Rust binary.
+A fast Markdown blog, built entirely in Rust. Pre-renders everything to static
+HTML at build time — pages are served straight from a CDN with zero cold starts
+and **no serverless functions at all**. Deploys as-is to Cloudflare Pages,
+GitHub Pages, Netlify, or any static host.
 
 ## Features
 
 - **Static output, zero client framework** — plain HTML + one small CSS file
 - **Build-time syntax highlighting** (syntect) — no highlight.js shipped to readers
-- **Full-text search** — Rust serverless function over a pre-built index
+- **Full static search** — a lean JSON index (title / description / tags, no post
+  bodies) is fetched once and ranked client-side; a few hundred bytes per post,
+  no backend
 - **SEO pack** — RSS feed, `sitemap.xml`, Open Graph meta, canonical URLs
 - **Tags** — frontmatter tags become `/tags/<tag>/` pages
 - **Reading time**, dark mode (system preference + toggle), drafts
 - GitHub-flavored Markdown: tables, footnotes, task lists, strikethrough, emoji shortcodes
 
-## Quick start
+## Use it as a crate
+
+The renderer is the `oxipress` library crate. Your blog repo needs only
+`blog.toml` and `content/*.md` — templates and assets are compiled into the
+crate. In a separate blog repo:
+
+```toml
+# Cargo.toml
+[dependencies]
+oxipress = { git = "https://github.com/dariush624/oxipress" }
+```
+
+```rust
+// src/main.rs — your blog's build binary
+fn main() {
+    let drafts = std::env::args().any(|a| a == "--drafts");
+    oxipress::build(oxipress::project_root(), drafts).unwrap();
+}
+```
+
+Or skip the wrapper entirely and install the bundled binary:
 
 ```bash
-# 1. Configure your site
-$EDITOR blog.toml
+cargo install --git https://github.com/dariush624/oxipress oxipress
+oxipress            # run from a dir containing blog.toml; writes ./dist
+```
 
-# 2. Write a post
-cp content/hello-world.md content/my-post.md
+## Quick start (this repo)
 
-# 3. Build locally
-cargo run -p generator            # add --drafts to include drafts
-vercel dev                        # preview at http://localhost:3000 (runs /api/search too)
-
-# 4. Deploy
-vercel
+```bash
+$EDITOR blog.toml                 # 1. configure your site
+cp content/hello-world.md content/my-post.md   # 2. write a post
+cargo run -p oxipress             # 3. build -> dist/  (add --drafts for drafts)
+python3 -m http.server -d dist    # 4. preview at http://localhost:8000
 ```
 
 ## Writing posts
@@ -49,26 +67,28 @@ draft: false        # optional; drafts are skipped in production builds
 ---
 ```
 
+## Deploy to Cloudflare Pages
+
+- **Build command:** `bash build.sh` (installs Rust if missing, runs the generator)
+- **Build output directory:** `dist`
+- Set `base_url` in `blog.toml` to your production domain so RSS/sitemap/OG URLs are correct.
+
 ## How it works
 
 | Path | What |
 | ---- | ---- |
-| `generator/` | Rust binary; renders `content/*.md` → `dist/` (pages, tags, RSS, sitemap, search index) |
-| `api/search.rs` | Rust serverless function (`vercel-rust` runtime); scores posts against the embedded index |
-| `assets/` | CSS + two tiny JS files (theme toggle, search widget), copied verbatim to `dist/` |
-| `build.sh` | Vercel build command: installs Rust, runs the generator, syncs the search index |
-| `blog.toml` | Site title, description, base URL, author |
-
-`api/search_index.json` is generated — `build.sh` refreshes it on every deploy,
-and a committed copy keeps the function compilable. Set `base_url` in
-`blog.toml` to your production domain so RSS/sitemap/OG URLs are correct.
+| `oxipress/` | The `oxipress` crate — library + `oxipress` binary; renders `content/*.md` → `dist/` (pages, tags, RSS, sitemap, search index) |
+| `oxipress/templates/` | minijinja templates, compiled in |
+| `oxipress/assets/` | CSS + two tiny JS files (theme toggle, static search), compiled in and emitted to `dist/` |
+| `content/` | your Markdown posts |
+| `build.sh` | Cloudflare Pages build command |
+| `blog.toml` | site title, description, base URL, author |
 
 ## Development
 
 ```bash
 cargo test
-cargo run -p generator && cp dist/search-index.json api/search_index.json
-vercel dev 
+cargo run -p oxipress
 ```
 
 ## License

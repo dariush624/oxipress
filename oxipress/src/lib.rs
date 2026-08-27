@@ -4,12 +4,18 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use comrak::plugins::syntect::SyntectAdapter;
 use comrak::options::Plugins;
+use comrak::plugins::syntect::SyntectAdapter;
 use comrak::{markdown_to_html_with_plugins, Options};
 use content::{escape_xml, plain_text, reading_time_min, rfc2822_date, split_frontmatter, Post};
 use minijinja::{context, Environment};
 use serde::Deserialize;
+
+const ASSETS: &[(&str, &str)] = &[
+    ("style.css", include_str!("../assets/style.css")),
+    ("theme.js", include_str!("../assets/theme.js")),
+    ("search.js", include_str!("../assets/search.js")),
+];
 
 #[derive(Debug, Deserialize)]
 struct Config {
@@ -19,16 +25,17 @@ struct Config {
     author: String,
 }
 
-fn main() {
-    let include_drafts = std::env::args().any(|a| a == "--drafts");
-    if let Err(e) = build(include_drafts) {
-        eprintln!("error: {e}");
-        std::process::exit(1);
+pub fn project_root() -> PathBuf {
+    let cwd = std::env::current_dir().expect("cwd");
+    if cwd.join("blog.toml").exists() {
+        cwd
+    } else {
+        cwd.parent().map(Path::to_path_buf).unwrap_or(cwd)
     }
 }
 
-fn build(include_drafts: bool) -> Result<(), String> {
-    let root = project_root();
+pub fn build(root: impl AsRef<Path>, include_drafts: bool) -> Result<(), String> {
+    let root = root.as_ref();
     let config: Config = toml::from_str(
         &fs::read_to_string(root.join("blog.toml")).map_err(|e| format!("blog.toml: {e}"))?,
     )
@@ -114,7 +121,7 @@ fn build(include_drafts: bool) -> Result<(), String> {
     write_feed(&out, &config, &base_url, &posts)?;
     write_sitemap(&out, &base_url, &posts, &tags)?;
     write_search_index(&out, &posts)?;
-    copy_assets(&root.join("assets"), &out)?;
+    write_assets(&out)?;
 
     println!(
         "built {} posts, {} tags -> {}",
@@ -123,15 +130,6 @@ fn build(include_drafts: bool) -> Result<(), String> {
         out.display()
     );
     Ok(())
-}
-
-fn project_root() -> PathBuf {
-    let cwd = std::env::current_dir().expect("cwd");
-    if cwd.join("blog.toml").exists() {
-        cwd
-    } else {
-        cwd.parent().map(Path::to_path_buf).unwrap_or(cwd)
-    }
 }
 
 fn load_posts(content_dir: &Path, include_drafts: bool) -> Result<Vec<Post>, String> {
@@ -148,8 +146,8 @@ fn load_posts(content_dir: &Path, include_drafts: bool) -> Result<Vec<Post>, Str
     plugins.render.codefence_syntax_highlighter = Some(&adapter);
 
     let mut posts = Vec::new();
-    let entries = fs::read_dir(content_dir)
-        .map_err(|e| format!("{}: {e}", content_dir.display()))?;
+    let entries =
+        fs::read_dir(content_dir).map_err(|e| format!("{}: {e}", content_dir.display()))?;
     for entry in entries {
         let path = entry.map_err(|e| e.to_string())?.path();
         if path.extension().and_then(|e| e.to_str()) != Some("md") {
@@ -166,6 +164,7 @@ fn load_posts(content_dir: &Path, include_drafts: bool) -> Result<Vec<Post>, Str
             continue;
         }
         let plain = plain_text(body);
+        let reading_time_min = reading_time_min(&plain);
         posts.push(Post {
             slug,
             title: fm.title,
@@ -173,8 +172,7 @@ fn load_posts(content_dir: &Path, include_drafts: bool) -> Result<Vec<Post>, Str
             tags: fm.tags,
             description: fm.description,
             html: markdown_to_html_with_plugins(body, &options, &plugins),
-            reading_time_min: reading_time_min(&plain),
-            plain_text: plain,
+            reading_time_min,
         });
     }
     posts.sort_by(|a, b| b.date.cmp(&a.date).then(a.slug.cmp(&b.slug)));
@@ -228,7 +226,6 @@ fn write_search_index(out: &Path, posts: &[Post]) -> Result<(), String> {
                 "title": p.title,
                 "description": p.description,
                 "tags": p.tags,
-                "body": p.plain_text.chars().take(5000).collect::<String>(),
             })
         })
         .collect();
@@ -236,14 +233,9 @@ fn write_search_index(out: &Path, posts: &[Post]) -> Result<(), String> {
     write(&out.join("search-index.json"), &json)
 }
 
-fn copy_assets(assets: &Path, out: &Path) -> Result<(), String> {
-    let entries = fs::read_dir(assets).map_err(|e| format!("{}: {e}", assets.display()))?;
-    for entry in entries {
-        let path = entry.map_err(|e| e.to_string())?.path();
-        if path.is_file() {
-            let dest = out.join(path.file_name().unwrap());
-            fs::copy(&path, &dest).map_err(|e| e.to_string())?;
-        }
+fn write_assets(out: &Path) -> Result<(), String> {
+    for (name, contents) in ASSETS {
+        write(&out.join(name), contents)?;
     }
     Ok(())
 }

@@ -1,8 +1,17 @@
 [package]
-name = "generator"
+name = "oxipress"
 version = "0.1.0"
 edition = "2021"
-publish = false
+description = "Render a directory of Markdown into a fast static blog."
+license = "MIT"
+repository = "https://github.com/dariush624/oxipress"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "oxipress"
+path = "src/main.rs"
 
 [dependencies]
 comrak = { version = "0.53", default-features = false, features = ["syntect-fancy", "shortcodes"] }

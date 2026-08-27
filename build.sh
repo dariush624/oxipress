@@ -6,6 +6,4 @@ if ! command -v cargo >/dev/null 2>&1; then
   . "$HOME/.cargo/env"
 fi
 
-cargo run --release -p generator
-
-cp dist/search-index.json api/search_index.json
+cargo run --release -p oxipress

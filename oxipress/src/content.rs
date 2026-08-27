@@ -21,7 +21,6 @@ pub struct Post {
     pub tags: Vec<String>,
     pub description: String,
     pub html: String,
-    pub plain_text: String,
     pub reading_time_min: u32,
 }
 
