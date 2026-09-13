@@ -39,14 +39,10 @@
     {% block content %}{% endblock %}
   </main>
   <footer class="site-footer">
-    {% if site.email or site.linkedin %}
-    <address class="contact">
-      {% if site.email %}<a href="mailto:{{ site.email }}">{{ site.email }}</a>{% endif %}
-      {% if site.email and site.linkedin %}·{% endif %}
-      {% if site.linkedin %}<a href="{{ site.linkedin }}" rel="me noopener" target="_blank">LinkedIn</a>{% endif %}
-    </address>
-    {% endif %}
-    <p>&copy; {{ site.author }} · Powered by <a href="https://github.com/dariush624/oxipress">Oxipress</a> 🦀</p>
+    <p>&copy; {{ site.author }}
+      {%- if site.email %} · <a href="mailto:{{ site.email }}">{{ site.email }}</a>{% endif %}
+      {%- if site.linkedin %} · <a href="{{ site.linkedin }}" rel="me noopener" target="_blank">LinkedIn</a>{% endif %}
+      · Powered by <a href="https://github.com/dariush624/oxipress">Oxipress</a> 🦀</p>
   </footer>
   <script src="/theme.js"></script>
   {% block scripts %}{% endblock %}
