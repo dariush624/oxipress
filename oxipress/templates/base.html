@@ -1,24 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ site.language }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{{ site.title }}{% endblock %}</title>
   <meta name="description" content="{% block description %}{{ site.description }}{% endblock %}">
   <meta name="author" content="{{ site.author }}">
+  {% if page_url %}<link rel="canonical" href="{{ page_url }}">{% endif %}
+  <meta property="og:site_name" content="{{ site.title }}">
   <meta property="og:title" content="{{ self.title() }}">
   <meta property="og:description" content="{{ self.description() }}">
   <meta property="og:type" content="{% block og_type %}website{% endblock %}">
-  <meta property="og:url" content="{{ page_url }}">
+  {% if page_url %}<meta property="og:url" content="{{ page_url }}">{% endif %}
+  {% if social_image %}
+  <meta property="og:image" content="{{ social_image }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="{{ social_image }}">
+  {% else %}
   <meta name="twitter:card" content="summary">
-  <link rel="canonical" href="{{ page_url }}">
+  {% endif %}
+  {% block head %}{% endblock %}
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="alternate" type="application/rss+xml" title="{{ site.title }}" href="/feed.xml">
+  <link rel="author" href="/humans.txt">
+  {% if site.linkedin %}<link rel="me" href="{{ site.linkedin }}">{% endif %}
   <link rel="stylesheet" href="/style.css">
   {% if json_ld %}<script type="application/ld+json">{{ json_ld|safe }}</script>{% endif %}
 </head>
 <body>
   <header class="site-header">
-    <a class="site-title" href="/">{{ site.title }}</a>
+    {% block brand %}<a class="site-title" href="/">{{ site.title }}</a>{% endblock %}
     <nav>
       <a href="/feed.xml">RSS</a>
       <button id="theme-toggle" aria-label="Toggle theme">◐</button>
@@ -28,6 +39,13 @@
     {% block content %}{% endblock %}
   </main>
   <footer class="site-footer">
+    {% if site.email or site.linkedin %}
+    <address class="contact">
+      {% if site.email %}<a href="mailto:{{ site.email }}">{{ site.email }}</a>{% endif %}
+      {% if site.email and site.linkedin %}·{% endif %}
+      {% if site.linkedin %}<a href="{{ site.linkedin }}" rel="me noopener" target="_blank">LinkedIn</a>{% endif %}
+    </address>
+    {% endif %}
     <p>&copy; {{ site.author }} · Powered by <a href="https://github.com/dariush624/oxipress">Oxipress</a> 🦀</p>
   </footer>
   <script src="/theme.js"></script>

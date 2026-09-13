@@ -6,9 +6,13 @@ pub struct Frontmatter {
     pub title: String,
     pub date: NaiveDate,
     #[serde(default)]
+    pub updated: Option<NaiveDate>,
+    #[serde(default)]
     pub tags: Vec<String>,
     #[serde(default)]
     pub description: String,
+    #[serde(default)]
+    pub image: Option<String>,
     #[serde(default)]
     pub draft: bool,
 }
@@ -18,10 +22,18 @@ pub struct Post {
     pub slug: String,
     pub title: String,
     pub date: NaiveDate,
+    pub updated: Option<NaiveDate>,
     pub tags: Vec<String>,
     pub description: String,
+    pub image: Option<String>,
     pub html: String,
     pub reading_time_min: u32,
+}
+
+impl Post {
+    pub fn last_modified(&self) -> NaiveDate {
+        self.updated.unwrap_or(self.date)
+    }
 }
 
 pub fn split_frontmatter(source: &str) -> Result<(Frontmatter, &str), String> {

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}#{{ tag }} · {{ site.title }}{% endblock %}
+{% block description %}{{ posts|length }} post{% if posts|length != 1 %}s{% endif %} tagged #{{ tag }} on {{ site.title }}.{% endblock %}
 {% block content %}
 <h1>#{{ tag }}</h1>
 <section class="post-list">

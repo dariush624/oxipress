@@ -12,8 +12,12 @@ GitHub Pages, Netlify, or any static host.
 - **Full static search** — a lean JSON index (title / description / tags, no post
   bodies) is fetched once and ranked client-side; a few hundred bytes per post,
   no backend
-- **SEO pack** — RSS feed, `sitemap.xml`, Open Graph meta, canonical URLs,
-  schema.org JSON-LD (`BlogPosting` / `WebSite` / `CollectionPage`)
+- **SEO pack** — RSS feed, `sitemap.xml` with `lastmod`, canonical URLs,
+  `robots.txt` that allows search (incl. AI search like OAI-SearchBot / PerplexityBot)
+  but blocks AI training crawlers by default (`allow_ai_training = true` to opt in),
+  Open Graph / Twitter cards (with `og:image`), schema.org JSON-LD (`BlogPosting` /
+  `WebSite` / `CollectionPage` / `BreadcrumbList`), `404.html`, favicon
+- **AI & humans** — `llms.txt` (llmstxt.org) and `humans.txt`
 - **Tags** — frontmatter tags become `/tags/<tag>/` pages
 - **Reading time**, dark mode (system preference + toggle), drafts
 - GitHub-flavored Markdown: tables, footnotes, task lists, strikethrough, emoji shortcodes
@@ -64,6 +68,8 @@ title: My Post
 date: 2026-07-01
 tags: [rust, web]
 description: Used in lists, search results, meta tags, and RSS.
+updated: 2026-07-15 # optional; drives dateModified, sitemap lastmod
+image: /img/my-post.png  # optional; social preview, overrides blog.toml `image`
 draft: false        # optional; drafts are skipped in production builds
 ---
 ```
@@ -82,8 +88,9 @@ draft: false        # optional; drafts are skipped in production builds
 | `oxipress/templates/` | minijinja templates, compiled in |
 | `oxipress/assets/` | CSS + two tiny JS files (theme toggle, static search), compiled in and emitted to `dist/` |
 | `content/` | your Markdown posts |
+| `static/` | optional; copied verbatim into `dist/` (images, `og.png`, custom `favicon.svg`, verification files) — overrides bundled files |
 | `build.sh` | Cloudflare Pages build command |
-| `blog.toml` | site title, description, base URL, author |
+| `blog.toml` | site title, description, base URL, author, optional `language`, `image`, `email` / `linkedin` (footer links + JSON-LD) |
 
 ## Development
 

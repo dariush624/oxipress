@@ -42,6 +42,8 @@ a:hover { text-decoration: underline; }
   padding: 1.5rem 0 2rem;
 }
 .site-title { font-weight: 700; font-size: 1.2rem; color: var(--fg); }
+h1.site-title { margin: 0; line-height: inherit; }
+h1.site-title a { color: inherit; }
 .site-header nav { display: flex; gap: 1rem; align-items: center; }
 #theme-toggle {
   background: none;
@@ -112,3 +114,4 @@ a:hover { text-decoration: underline; }
 #search-results .desc { display: block; color: var(--muted); font-size: 0.85rem; }
 
 .site-footer { margin-top: 4rem; color: var(--muted); font-size: 0.85rem; }
+.site-footer .contact { font-style: normal; }

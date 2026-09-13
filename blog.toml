@@ -2,3 +2,7 @@ title = "Oxipress"
 description = "A fast Markdown blog, built in Rust, deployed on Vercel."
 base_url = "https://example.vercel.app"
 author = "Your Name"
+language = "en"
+allow_ai_training = false
+email = "you@example.com"
+linkedin = "https://www.linkedin.com/in/your-handle/"
