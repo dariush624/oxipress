@@ -29,20 +29,24 @@
 </head>
 <body>
   <header class="site-header">
-    {% block brand %}<a class="site-title" href="/">{{ site.title }}</a>{% endblock %}
-    <nav>
-      <a href="/feed.xml">RSS</a>
-      <button id="theme-toggle" aria-label="Toggle theme">◐</button>
-    </nav>
+    <div class="wrap">
+      {% block brand %}<a class="site-title" href="/">{{ site.title }}</a>{% endblock %}
+      <nav>
+        <a href="/feed.xml">RSS</a>
+        <button id="theme-toggle" aria-label="Toggle theme">◐</button>
+      </nav>
+    </div>
   </header>
-  <main>
+  <main class="wrap">
     {% block content %}{% endblock %}
   </main>
   <footer class="site-footer">
-    <p>&copy; {{ site.author }}
-      {%- if site.email %} · <a href="mailto:{{ site.email }}">{{ site.email }}</a>{% endif %}
-      {%- if site.linkedin %} · <a href="{{ site.linkedin }}" rel="me noopener" target="_blank">LinkedIn</a>{% endif %}
-      · Powered by <a href="https://github.com/dariush624/oxipress">Oxipress</a> 🦀</p>
+    <div class="wrap">
+      <p>&copy; {{ site.author }}
+        {%- if site.email %} · <a href="mailto:{{ site.email }}">{{ site.email }}</a>{% endif %}
+        {%- if site.linkedin %} · <a href="{{ site.linkedin }}" rel="me noopener" target="_blank">LinkedIn</a>{% endif %}
+        · Powered by <a href="https://github.com/dariush624/oxipress">Oxipress</a> 🦀</p>
+    </div>
   </footer>
   <script src="/theme.js"></script>
   {% block scripts %}{% endblock %}
