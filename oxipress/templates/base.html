@@ -22,6 +22,7 @@
   {% block head %}{% endblock %}
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="alternate" type="application/rss+xml" title="{{ site.title }}" href="/feed.xml">
+  {% if md_url %}<link rel="alternate" type="text/markdown" href="{{ md_url }}">{% endif %}
   <link rel="author" href="/humans.txt">
   {% if site.linkedin %}<link rel="me" href="{{ site.linkedin }}">{% endif %}
   <link rel="stylesheet" href="/style.css">

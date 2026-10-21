@@ -35,6 +35,8 @@ struct Config {
     linkedin: Option<String>,
     #[serde(default)]
     allow_ai_training: bool,
+    #[serde(default = "default_true")]
+    markdown: bool,
 }
 
 const AI_SEARCH_BOTS: &[&str] = &[
@@ -72,6 +74,10 @@ const AI_TRAINING_BOTS: &[&str] = &[
     "Kangaroo Bot",
     "img2dataset",
 ];
+
+fn default_true() -> bool {
+    true
+}
 
 fn default_language() -> String {
     "en".to_string()
@@ -143,6 +149,7 @@ pub fn build(root: impl AsRef<Path>, include_drafts: bool) -> Result<(), String>
             site => site,
             posts => post_list,
             page_url => format!("{base_url}/"),
+            md_url => md_href(&config, ""),
             social_image => site_image,
             json_ld => website_json_ld(&config, &base_url),
         })
@@ -162,6 +169,7 @@ pub fn build(root: impl AsRef<Path>, include_drafts: bool) -> Result<(), String>
                 site => site,
                 post => post_ctx(p),
                 page_url => format!("{base_url}/posts/{}/", p.slug),
+                md_url => md_href(&config, &format!("posts/{}/", p.slug)),
                 social_image => image,
                 json_ld => post_json_ld(&config, &base_url, p, image.as_deref()),
             })
@@ -185,6 +193,7 @@ pub fn build(root: impl AsRef<Path>, include_drafts: bool) -> Result<(), String>
                 tag => tag,
                 posts => list,
                 page_url => format!("{base_url}/tags/{tag}/"),
+                md_url => md_href(&config, &format!("tags/{tag}/")),
                 social_image => site_image,
                 json_ld => tag_json_ld(&config, &base_url, tag, tagged),
             })
@@ -203,6 +212,9 @@ pub fn build(root: impl AsRef<Path>, include_drafts: bool) -> Result<(), String>
     write_sitemap(&out, &base_url, &posts, &tags)?;
     write_robots(&out, &config, &base_url)?;
     write_llms_txt(&out, &config, &base_url, &posts)?;
+    if config.markdown {
+        write_markdown_pages(&out, &config, &base_url, &posts, &tags)?;
+    }
     write_humans_txt(&out, &config, &posts)?;
     write_search_index(&out, &posts)?;
     write_assets(&out)?;
@@ -259,6 +271,7 @@ fn load_posts(content_dir: &Path, include_drafts: bool) -> Result<Vec<Post>, Str
             description: fm.description,
             image: fm.image,
             html: markdown_to_html_with_plugins(body, &options, &plugins),
+            markdown: body.to_string(),
             reading_time_min,
         });
     }
@@ -347,6 +360,86 @@ fn write_robots(out: &Path, config: &Config, base_url: &str) -> Result<(), Strin
     }
     txt.push_str(&format!("Sitemap: {base_url}/sitemap.xml\n"));
     write(&out.join("robots.txt"), &txt)
+}
+
+fn md_href(config: &Config, dir: &str) -> Option<String> {
+    config.markdown.then(|| format!("/{dir}index.md"))
+}
+
+/// Rewrites root-relative Markdown links and images to absolute URLs, leaving fenced code alone.
+fn absolutize_links(markdown: &str, base_url: &str) -> String {
+    let mut in_fence = false;
+    let mut out = String::with_capacity(markdown.len());
+    for line in markdown.lines() {
+        let trimmed = line.trim_start();
+        if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
+            in_fence = !in_fence;
+        }
+        if in_fence {
+            out.push_str(line);
+        } else {
+            out.push_str(&line.replace("](/", &format!("]({base_url}/")));
+        }
+        out.push('\n');
+    }
+    out
+}
+
+fn write_markdown_pages(
+    out: &Path,
+    config: &Config,
+    base_url: &str,
+    posts: &[Post],
+    tags: &BTreeMap<&str, Vec<&Post>>,
+) -> Result<(), String> {
+    let list = |posts: &[&Post]| -> String {
+        posts
+            .iter()
+            .map(|p| {
+                let url = format!("{base_url}/posts/{}/", p.slug);
+                if p.description.is_empty() {
+                    format!("- [{}]({url}) ({})\n", p.title, p.date)
+                } else {
+                    format!("- [{}]({url}) ({}): {}\n", p.title, p.date, p.description)
+                }
+            })
+            .collect()
+    };
+    let all: Vec<&Post> = posts.iter().collect();
+    let home = format!(
+        "# {}\n\n> {}\n\nBy {}. Canonical: {base_url}/\n\n## Posts\n\n{}",
+        config.title,
+        config.description,
+        config.author,
+        list(&all)
+    );
+    write(&out.join("index.md"), &home)?;
+
+    for p in posts {
+        let url = format!("{base_url}/posts/{}/", p.slug);
+        let mut head = format!("# {}\n\n", p.title);
+        if !p.description.is_empty() {
+            head.push_str(&format!("> {}\n\n", p.description));
+        }
+        head.push_str(&format!("- Canonical: {url}\n- Author: {}\n- Published: {}\n", config.author, p.date));
+        if let Some(updated) = p.updated {
+            head.push_str(&format!("- Updated: {updated}\n"));
+        }
+        if !p.tags.is_empty() {
+            head.push_str(&format!("- Tags: {}\n", p.tags.join(", ")));
+        }
+        let md = format!("{head}\n{}", absolutize_links(&p.markdown, base_url));
+        write(&out.join("posts").join(&p.slug).join("index.md"), &md)?;
+    }
+
+    for (tag, tagged) in tags {
+        let md = format!(
+            "# #{tag}\n\nCanonical: {base_url}/tags/{tag}/\n\n## Posts\n\n{}",
+            list(tagged)
+        );
+        write(&out.join("tags").join(tag).join("index.md"), &md)?;
+    }
+    Ok(())
 }
 
 fn write_llms_txt(out: &Path, config: &Config, base_url: &str, posts: &[Post]) -> Result<(), String> {
@@ -602,7 +695,46 @@ mod tests {
         assert!(post.contains("article:modified_time"));
         assert!(post.contains("\"dateModified\":\"2026-02-03\""));
         assert!(post.contains("BreadcrumbList"));
+        assert!(post.contains("type=\"text/markdown\""));
+        assert!(post.contains("index.md"));
+
+        let md = read("posts/p/index.md");
+        assert!(md.starts_with("# P\n\n> Desc\n"));
+        assert!(md.contains("- Canonical: https://ex.com/posts/p/"));
+        assert!(md.ends_with("Body.\n"));
+        assert!(read("index.md").contains("- [P](https://ex.com/posts/p/) (2026-01-02): Desc"));
+        assert!(read("tags/rust/index.md").contains("https://ex.com/posts/p/"));
 
         fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn markdown_twins_can_be_disabled() {
+        let root = std::env::temp_dir().join(format!("oxipress-nomd-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(root.join("content")).unwrap();
+        fs::write(
+            root.join("blog.toml"),
+            "title = \"T\"\ndescription = \"D\"\nbase_url = \"https://ex.com\"\nauthor = \"A\"\nmarkdown = false\n",
+        )
+        .unwrap();
+        fs::write(
+            root.join("content/p.md"),
+            "---\ntitle: P\ndate: 2026-01-02\n---\n\nBody.\n",
+        )
+        .unwrap();
+        build(&root, false).unwrap();
+        assert!(!root.join("dist/index.md").exists());
+        let html = fs::read_to_string(root.join("dist/index.html")).unwrap();
+        assert!(!html.contains("text/markdown"));
+        fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn absolutizes_links_outside_code_fences() {
+        let md = "[a](/x/) ![i](/img.png)\n```\n[b](/y/)\n```\n";
+        let out = absolutize_links(md, "https://ex.com");
+        assert!(out.contains("[a](https://ex.com/x/) ![i](https://ex.com/img.png)"));
+        assert!(out.contains("[b](/y/)"));
     }
 }

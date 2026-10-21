@@ -80,6 +80,20 @@ draft: false        # optional; drafts are skipped in production builds
 - **Build output directory:** `dist`
 - Set `base_url` in `blog.toml` to your production domain so RSS/sitemap/OG URLs are correct.
 
+## Markdown for agents
+
+Every page also gets a Markdown twin (`/index.md`, `/posts/<slug>/index.md`, `/tags/<tag>/index.md`),
+advertised with `<link rel="alternate" type="text/markdown">`. Set `markdown = false` in `blog.toml`
+to turn this off. A static generator can't negotiate `Accept` itself, so the host has to serve the
+twin when a request sends `Accept: text/markdown` (and `Vary: Accept` on the HTML):
+
+- **Cloudflare Pages:** included — `functions/_middleware.js` plus `static/_routes.json`, which limits
+  the function to `/`, `/posts/*` and `/tags/*`.
+- **Cloudflare zone:** alternatively enable *Markdown for Agents* (AI Crawl Control); it converts the HTML itself.
+- **nginx:** `map $http_accept $md { default ""; ~*text/markdown index.md; }` and try `$uri$md`.
+- **Netlify / Vercel / others:** a header-conditional rewrite (Netlify edge function, Vercel `has` header rewrite)
+  from the page path to its `index.md`, with `Content-Type: text/markdown`.
+
 ## How it works
 
 | Path | What |
