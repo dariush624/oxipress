@@ -27,6 +27,7 @@ pub struct Post {
     pub description: String,
     pub image: Option<String>,
     pub html: String,
+    pub markdown: String,
     pub reading_time_min: u32,
 }
 
