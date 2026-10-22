@@ -24,7 +24,22 @@
   <link rel="alternate" type="application/rss+xml" title="{{ site.title }}" href="/feed.xml">
   <link rel="author" href="/humans.txt">
   {% if site.linkedin %}<link rel="me" href="{{ site.linkedin }}">{% endif %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Fonts for the brutalist (Space Grotesk) and retro (VT323, Courier Prime) themes -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Space+Grotesk:wght@400;500;700&family=VT323&display=swap">
   <link rel="stylesheet" href="/style.css">
+  <script>
+    /* Apply the saved theme before first paint. Old builds stored "light"/"dark"
+       under "theme"; migrate that to the new "mode" key. */
+    (function () {
+      var r = document.documentElement, t, m;
+      try { t = localStorage.getItem("theme"); m = localStorage.getItem("mode"); } catch (e) {}
+      if (t === "light" || t === "dark") { m = t; t = null; try { localStorage.setItem("mode", m); localStorage.removeItem("theme"); } catch (e) {} }
+      r.setAttribute("data-theme", t === "brutalist" || t === "retro" ? t : "original");
+      if (m === "light" || m === "dark") r.setAttribute("data-mode", m);
+    })();
+  </script>
   {% if json_ld %}<script type="application/ld+json">{{ json_ld|safe }}</script>{% endif %}
 </head>
 <body>
@@ -33,7 +48,8 @@
       {% block brand %}<a class="site-title" href="/">{{ site.title }}</a>{% endblock %}
       <nav>
         <a href="/feed.xml">RSS</a>
-        <button id="theme-toggle" aria-label="Toggle theme">◐</button>
+        <button id="style-switch" type="button" aria-label="Switch visual theme">Theme</button>
+        <button id="theme-toggle" type="button" aria-label="Toggle light/dark">◐</button>
       </nav>
     </div>
   </header>
